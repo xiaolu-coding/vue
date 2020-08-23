@@ -114,16 +114,23 @@
   /**
    * Make a map and return a function for checking if a key
    * is in that map.
+   * 生成一个映射并返回一个函数，用于检查是否在map上。
    */
   function makeMap (
     str,
     expectsLowerCase
   ) {
+    // 创建一个空对象
     var map = Object.create(null);
+    // 把传入的字符串转成数组
     var list = str.split(',');
+    // 遍历数组
     for (var i = 0; i < list.length; i++) {
+      // 给map对象添加属性，值为true
       map[list[i]] = true;
     }
+    // 如果这个为true，返回小写的，false返回原状态
+    // 返回一堆函数，通过函数判断
     return expectsLowerCase
       ? function (val) { return map[val.toLowerCase()]; }
       : function (val) { return map[val]; }
@@ -500,9 +507,11 @@
 
   /**
    * unicode letters used for parsing html tags, component names and property paths.
+   * 用于解析html标记、组件名称和属性路径的unicode字母。
    * using https://www.w3.org/TR/html53/semantics-scripting.html#potentialcustomelementname
    * skipping \u10000-\uEFFFF due to it freezing up PhantomJS
-   */
+   */                                 
+                                    //  ·    À       Ö      Ø      ö     ø      ͽ     Ϳ      ῿                 ‿      ⁀     ⁰        
   var unicodeRegExp = /a-zA-Z\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD/;
 
   /**
@@ -585,8 +594,10 @@
 
   // this needs to be lazy-evaled because vue may be required before
   // vue-server-renderer can set VUE_ENV
+  // 因为之前可能需要vue，所以需要延迟评估vue服务器呈现程序可以设置vue_ENV
   var _isServer;
   var isServerRendering = function () {
+    // 如果Undefined
     if (_isServer === undefined) {
       /* istanbul ignore if */
       if (!inBrowser && !inWeex && typeof global !== 'undefined') {
@@ -597,6 +608,7 @@
         _isServer = false;
       }
     }
+    // 返回fasle
     return _isServer
   };
 
@@ -10531,6 +10543,7 @@
 
   /*  */
 
+  // 返回一堆函数，通过函数判断是否是这个标签，
   var isUnaryTag = makeMap(
     'area,base,br,col,embed,frame,hr,img,input,isindex,keygen,' +
     'link,meta,param,source,track,wbr'
@@ -10538,6 +10551,9 @@
 
   // Elements that you can, intentionally, leave open
   // (and which close themselves)
+  // 你可以有意识地保持开放的元素（并且自己关闭）
+
+  // 返回一堆函数，通过函数判断是否是这个标签，
   var canBeLeftOpenTag = makeMap(
     'colgroup,dd,dt,li,options,p,td,tfoot,th,thead,tr,source'
   );
@@ -10554,25 +10570,42 @@
 
   /**
    * Not type-checking this file because it's mostly vendor code.
+   * 不检查此文件的类型，因为它主要是供应商代码
    */
 
   // Regular Expressions for parsing tags and attributes
+  // 用于分析标记和属性的正则表达式
+
+  //TODO 一大群正则
+  //! 获取静态属性
   var attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;
+  //! 获取动态绑定的属性
   var dynamicArgAttribute = /^\s*((?:v-[\w-]+:|@|:|#)\[[^=]+\][^\s"'<>\/=]*)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;
+  //! 
   var ncname = "[a-zA-Z_][\\-\\.0-9_a-zA-Z" + (unicodeRegExp.source) + "]*";
   var qnameCapture = "((?:" + ncname + "\\:)?" + ncname + ")";
+  //! 匹配开头必需是< 后面可以忽略是任何字符串  
   var startTagOpen = new RegExp(("^<" + qnameCapture));
+  //! 匹配 > 标签 或者/> 闭合标签  
   var startTagClose = /^\s*(\/?)>/;
+  //! 匹配开头必需是</ 后面可以忽略是任何字符串
   var endTag = new RegExp(("^<\\/" + qnameCapture + "[^>]*>"));
+  //! 匹配html的头文件 <!DOCTYPE html>
   var doctype = /^<!DOCTYPE [^>]+>/i;
   // #7298: escape - to avoid being pased as HTML comment when inlined in page
+  // escape-避免在页面内联时被转换为HTML注释
+  //! 匹配 以 <!-- 开头的字符串
   var comment = /^<!\--/;
+  //! 匹配开始为 <![ 字符串    匹配这样动态加ie浏览器的 字符串  <!--[if IE 8]><link href="ie8only.css" rel="stylesheet"><![endif]-->
   var conditionalComment = /^<!\[/;
 
-  // Special Elements (can contain anything)
+  //! Special Elements (can contain anything)
+  //! 特殊元素（可以包含任何内容）  也就是判断这三个script style textarea
+  //! 返回的是一堆函数，用来判断是否是这些标签 
   var isPlainTextElement = makeMap('script,style,textarea', true);
   var reCache = {};
 
+  //! 替换的map 将这些转换成对应的
   var decodingMap = {
     '&lt;': '<',
     '&gt;': '>',
@@ -10582,66 +10615,139 @@
     '&#9;': '\t',
     '&#39;': "'"
   };
+  //! 匹配&lt &gt &quot &amp &#39
   var encodedAttr = /&(?:lt|gt|quot|amp|#39);/g;
+  //! 匹配&lt &gt &quot &amp &#39 &#10 &#9
   var encodedAttrWithNewLines = /&(?:lt|gt|quot|amp|#39|#10|#9);/g;
 
   // #5992
+  //! 返回一个对象，对象内部由pre和textarea属性，用这个对象可以验证标签是否是pre 和textarea
   var isIgnoreNewlineTag = makeMap('pre,textarea', true);
+  //! 匹配tag标签是pre,textarea，并且第二个参数的第一个字符是回车键
   var shouldIgnoreFirstNewline = function (tag, html) { return tag && isIgnoreNewlineTag(tag) && html[0] === '\n'; };
 
+  //! 替换html 中的特殊符号，转义成js能解析的字符串,替换 把&lt;替换 <  ，&gt; 替换 > ， &quot;替换  "， &amp;替换 & ， &#10;替换\n  ，&#9;替换\t
   function decodeAttr (value, shouldDecodeNewlines) {
+    // shouldDecodeNewlines为布尔值，根据布尔值决定使用哪种方式检测特殊符号
     var re = shouldDecodeNewlines ? encodedAttrWithNewLines : encodedAttr;
+    // 最后将特殊符号转换成对应的 通过decodingMap
     return value.replace(re, function (match) { return decodingMap[match]; })
   }
 
+  //TODO 250行的函数
+  //! 接收一个字符串模板 和一大堆参数
   function parseHTML (html, options) {
+    // parseHTML节点标签堆栈
     var stack = [];
+    // 
     var expectHTML = options.expectHTML;
+    //! 匹配这些标签，不是就是no
+    //! 'area,base,br,col,embed,frame,hr,img,input,isindex,keygen,' +
+    //! 'link,meta,param,source,track,wbr'
     var isUnaryTag = options.isUnaryTag || no;
+    //! canBeLeftOpenTag 匹配
+    //! 'colgroup,dd,dt,li,options,p,td,tfoot,th,thead,tr,source' 
     var canBeLeftOpenTag = options.canBeLeftOpenTag || no;
+    
     var index = 0;
     var last, lastTag;
+
+    //! 此时的html就其实是字符串模板 也可以说template
+    //! console.log(html)
+    //! <div id="app">
+    //!   <div :v-show="isShow">111</div>
+    //!   <input type="text" v-model="inputVal" @input.enter="inputIII">
+    //!   <div :class="{red: isRed}">111111111</div>
+    //!   <button @click="btnClick">提交</button>
+    //! </div>
+
+    //! console.log(options)
+    //! 此时的options
+    //! canBeLeftOpenTag: ƒ (val)
+    //! chars: ƒ chars(text, start, end)
+    //! comment: ƒ comment(text, start, end)
+    //! end: ƒ end(tag, start, end$1)
+    //! expectHTML: true
+    //! isUnaryTag: ƒ (val)
+    //! outputSourceRange: true
+    //! shouldDecodeNewlines: false
+    //! shouldDecodeNewlinesForHref: false
+    //! shouldKeepComment: undefined
+    //! start: ƒ start(tag, attrs, unary, start$1, end)
+    //! warn: ƒ (msg, range, tip)
+
+    // 遍历Html
     while (html) {
+      // 
       last = html;
       // Make sure we're not in a plaintext content element like script/style
+      // 确保我们不在像script/style这样的纯文本内容元素中
+      
+      //! 返回的是一堆函数，用来判断是否是这些标签
+      //! lastTag是每次的标签名，如果这个标签不是script style textarea中
       if (!lastTag || !isPlainTextElement(lastTag)) {
+        // 获取开始的< 的位置坐标
         var textEnd = html.indexOf('<');
+        // < 的下标为0 也就是一开始就是<
         if (textEnd === 0) {
+          // 判断是否是注释
           // Comment:
+          //! 如果是以 <!-- 开头的字符串 
           if (comment.test(html)) {
+            // 这时候就是html里的注释
+            // 获取注释结尾的下标
             var commentEnd = html.indexOf('-->');
-
+            // 如果有结尾注释
             if (commentEnd >= 0) {
+              // 如果shouldKeepComment为真时，获取注释内容
               if (options.shouldKeepComment) {
                 options.comment(html.substring(4, commentEnd), index, index + commentEnd + 3);
               }
+              // 把注释截取掉之后 继续进行while循环
               advance(commentEnd + 3);
+              // console.log(html)
               continue
             }
           }
-
+          
           // http://en.wikipedia.org/wiki/Conditional_comment#Downlevel-revealed_conditional_comment
+          // 如果是这种IE的判断类型 
+          //! 匹配这样动态加ie浏览器的 字符串  
+          // <!--[if IE 8]><link href="ie8only.css" rel="stylesheet"><![endif]-->
           if (conditionalComment.test(html)) {
+            // 
             var conditionalEnd = html.indexOf(']>');
 
             if (conditionalEnd >= 0) {
+              // 截取掉这个字符串，然后继续进行while循环
               advance(conditionalEnd + 2);
               continue
             }
           }
 
           // Doctype:
+          //! 如果匹配到doctype
           var doctypeMatch = html.match(doctype);
+          // 如果匹配到doctype
           if (doctypeMatch) {
+            // 将doctype截取掉，然后继续进行while循环
             advance(doctypeMatch[0].length);
             continue
           }
 
           // End tag:
+          //! 匹配开头必需是</ 后面可以忽略是任何字符串
           var endTagMatch = html.match(endTag);
+          // 如果匹配到</
           if (endTagMatch) {
+            // 
             var curIndex = index;
+            // 将结束标签 例如</div>删除
             advance(endTagMatch[0].length);
+            // console.log(endTagMatch)
+
+
+            // endTagMatch[1]是结束标签的标签名 传删除前后的坐标
             parseEndTag(endTagMatch[1], curIndex, index);
             continue
           }
@@ -10722,6 +10828,7 @@
     // Clean up any remaining tags
     parseEndTag();
 
+    //! while 跳出循环就是靠该函数，每次匹配到之后就截取掉字符串，知道最后一个标签被截取完没有匹配到则跳出循环 
     function advance (n) {
       index += n;
       html = html.substring(n);
@@ -10795,27 +10902,42 @@
       }
     }
 
-    function parseEndTag (tagName, start, end) {
+    // 
+    function parseEndTag (
+      tagName, // 标签名称
+      start,  // 结束标签开始的位置
+      end // 结束标签结束的位置
+      ) {
       var pos, lowerCasedTagName;
+      // 如果没有传start 也就是开始坐标 就用Index
       if (start == null) { start = index; }
+      // 如果没有传start 也就是结束坐标 就用Index
       if (end == null) { end = index; }
 
       // Find the closest opened tag of the same type
+      //! 查找最近打开的相同类型的标记
       if (tagName) {
+        // 获取小写的标签名
         lowerCasedTagName = tagName.toLowerCase();
+        // 遍历stack 
         for (pos = stack.length - 1; pos >= 0; pos--) {
+          //! 找到最近的相同类型的节点标签
           if (stack[pos].lowerCasedTag === lowerCasedTagName) {
             break
           }
         }
       } else {
         // If no tag name is provided, clean shop
+        // 如果没有提供标签名称，请清理车间
         pos = 0;
       }
 
+      //! 如果Pos大于0，代表获取到了最近的相同类型标签
       if (pos >= 0) {
         // Close all the open elements, up the stack
+        //! 关闭所有打开的元素，在堆栈上
         for (var i = stack.length - 1; i >= pos; i--) {
+          // 如果stack中找不到tagName 标签的时候就输出警告日志，找不到标签
           if (
             (i > pos || !tagName) &&
             options.warn
@@ -10825,22 +10947,33 @@
               { start: stack[i].start, end: stack[i].end }
             );
           }
+          // 如果options.end方法存在
+          // 调用options.end函数，删除当前节点的子节点中的最后一个如果是空格或者空的文本节点则删除，
+          // 为stack出栈一个当前标签，为currentParent变量获取到当前节点的父节点
           if (options.end) {
             options.end(stack[i].tag, start, end);
           }
         }
 
         // Remove the open elements from the stack
+        // 从堆栈中移除打开的元素
+        // console.log(stack[pos].tag)
         stack.length = pos;
         lastTag = pos && stack[pos - 1].tag;
+        // console.log(lastTag)
+        // 如果标签名是br
       } else if (lowerCasedTagName === 'br') {
+        // 调用options.start方法
         if (options.start) {
           options.start(tagName, [], true, start, end);
         }
+        // 如果标签名是p
       } else if (lowerCasedTagName === 'p') {
+        // 调用options.start方法
         if (options.start) {
           options.start(tagName, [], false, start, end);
         }
+        // 调用options.end方法
         if (options.end) {
           options.end(tagName, start, end);
         }
@@ -10894,7 +11027,7 @@
   var platformGetTagNamespace;
   var maybeComponent;
 
-  // 
+  //! 创建AST对象， 
   function createASTElement(
     tag, // 标签名
     attrs , // 属性列表数组
@@ -10961,11 +11094,11 @@
      *    transformNode$1
      * ]
      */
-    // transformNode,
-    // 获取 class 属性和:class或者v-bind的动态属性值，
-    // 并且转化成字符串 添加到staticClass和classBinding 属性中
-    // staticClass存放 class的  classBinding存放 v-bind:class和:class的
-    // function transformNode (el, options) {
+    //! transformNode,
+    //! 获取 class 属性和:class或者v-bind的动态属性值，
+    //! 并且转化成字符串 添加到staticClass和classBinding 属性中
+    //! staticClass存放 class的  classBinding存放 v-bind:class和:class的
+    //! function transformNode (el, options) {
     //   var warn = options.warn || baseWarn;
     //   var staticClass = getAndRemoveAttr(el, 'class');
     //   if ( staticClass) {
@@ -10988,11 +11121,11 @@
     //     el.classBinding = classBinding;
     //   }
     // }
-    // transformNode$1
-    // transformNode$1获取 style属性和:style或者v-bind的动态属性值，
-    // 并且转化成字符串 添加到staticStyle和styleBinding属性中
-    // style在staticStyle中 v-bind:style和:stlye在styleBinding中
-    // function transformNode$1 (el, options) {
+    //! transformNode$1
+    //! transformNode$1获取 style属性和:style或者v-bind的动态属性值，
+    //! 并且转化成字符串 添加到staticStyle和styleBinding属性中
+    //! style在staticStyle中 v-bind:style和:stlye在styleBinding中
+    //! function transformNode$1 (el, options) {
     //   var warn = options.warn || baseWarn;
     //   var staticStyle = getAndRemoveAttr(el, 'style');
     //   if (staticStyle) {
@@ -11030,11 +11163,15 @@
      *    preTransfornNode
      * ]
      */
-    // preTransforms
-    // preTransformNode把attrsMap与attrsList属性值转换添加到el   
-    // ast虚拟dom中为虚拟dom添加for，alias，iterator1，iterator2， 
-    // addRawAttr ，type ，key， ref，slotName或者slotScope
-    // 或者slot，component或者inlineTemplate ， plain，if ，else，elseif 属性
+
+
+    //! preTransforms
+    //! preTransformNode把attrsMap与attrsList属性值转换添加到el   
+    //! ast虚拟dom中为虚拟dom添加for，alias，iterator1，iterator2， 
+    //! addRawAttr ，type ，key， ref，slotName或者slotScope
+    //! 或者slot，component或者inlineTemplate ， plain，if ，else，elseif 属性
+
+    //! 判断前提：首先要是Input标签，然后还必须有v-model，并且有动态绑定的type属性
 
     // function preTransformNode (el, options) {
     //   if (el.tag === 'input') {
@@ -11115,38 +11252,67 @@
 
 
     // 到这
+    // parse函数 标签堆栈
     var stack = [];
+    // 模板编译器的选项。当使用默认的 vue-template-compiler 的时候，
+    // 你可以使用这个选项来添加自定义编译器指令、模块或
+    // 通过 { preserveWhitespace: false } 放弃模板标签之间的空格。
     var preserveWhitespace = options.preserveWhitespace !== false;
+    // 
     var whitespaceOption = options.whitespace;
     var root;
-    var currentParent;
+    // 当前AST
+    var currentParent; 
+    // 是否有v-pre指令
     var inVPre = false;
+    // 是否是pre标签
     var inPre = false;
+    // 警告
     var warned = false;
-
+    
+    // 警告一次
     function warnOnce(msg, range) {
+      // 如果warned是false
       if (!warned) {
+        // 变为true
         warned = true;
+        // 执行warn
         warn$2(msg, range);
       }
     }
 
+    
     function closeElement(element) {
+      // 删除屁股后的空白文本节点
       trimEndingWhitespace(element);
+
+      // 如果processed为true代表已经加工过 防止二次加工
+      // 如果没有v-pre指令 并且 processed为false 代表没加工过
       if (!inVPre && !element.processed) {
+        // 进行一次加工，添加很多很多属性并校验属性的值，可以跳过去看
         element = processElement(element, options);
       }
       // tree management
+      // 管理 tree
+
+      // 如果stack不为空 并且element不是根节点
       if (!stack.length && element !== root) {
         // allow root elements with v-if, v-else-if and v-else
+        // 允许根元素使用v-if、v-else-if和v-else
         if (root.if && (element.elseif || element.else)) {
           {
+            // 检测root，如果为slot和template标签，警告，如果有v-for指令，警告
             checkRootConstraints(element);
           }
+          // 为root这个AST添加ifConditions数组，并且给数组添加condition(条件)
           addIfCondition(root, {
             exp: element.elseif,
             block: element
           });
+          // 如果有v-if没有v-else 警告
+          // 组件模板应该只包含一个根元素。
+          // 如果在多个元素上使用v-If
+          // 使用v-else-if来代替它们
         } else {
           warnOnce(
             "Component template should contain exactly one root element. " +
@@ -11157,57 +11323,97 @@
           );
         }
       }
+      //! console.log(currentParent)
+      //! console.log(element)
+
+      // 如果当前AST存在 并且 element.forbidden为false
+      // forbidden如果是style或者是是script 标签并且type属性不存在 或者存在并且是javascript 属性 的时候返回真
       if (currentParent && !element.forbidden) {
+        // 如果有elseif或else
         if (element.elseif || element.else) {
+          // 找到上一个兄弟节点，如果上一个兄弟节点是if，则下一个兄弟节点则是elseif
           processIfConditions(element, currentParent);
         } else {
+          // 如果存在slotScope
           if (element.slotScope) {
             // scoped slot
             // keep it in the children list so that v-else(-if) conditions can
             // find it as the prev node.
+            // 作用域插槽
+            // 将其保留在子列表中，以便v-else（-if）条件可以
+            // 找到它作为前一个节点。
+
+            // 获取slotTarget 没有就定义为 default
             var name = element.slotTarget || '"default"';
+            // 给currentParent的scopedSlots对象添加name属性，值为element
             (currentParent.scopedSlots || (currentParent.scopedSlots = {}))[name] = element;
           }
+          // 给当前AST的儿子添加一个element，也就是添加节点
           currentParent.children.push(element);
+          // 然后指定element.parent为currentParent，像是互相连接一样
           element.parent = currentParent;
         }
       }
 
       // final children cleanup
       // filter out scoped slots
+      // 最终子级清理筛选出作用域插槽
+
+      // 筛选出不存在slotScope的children
       element.children = element.children.filter(function (c) { return !(c).slotScope; });
       // remove trailing whitespace node again
+      // 再次清理后面空文本节点
       trimEndingWhitespace(element);
 
       // check pre state
+      // 检查pre
+      // 如果element有pre属性
       if (element.pre) {
+        // 把v-pre置为false
         inVPre = false;
       }
+      // export const isPreTag = (tag: ?string): boolean => tag === 'pre'
+      // platformIsPreTag = options.isPreTag || no //方法 
+
+      // 检查tag属性是否等于 pre 也就是是否是pre标签
       if (platformIsPreTag(element.tag)) {
+        // inpre为false
         inPre = false;
       }
       // apply post-transforms
+      // postTransforms
+
+      // 此时postTransforms数组为空，不执行这里
       for (var i = 0; i < postTransforms.length; i++) {
         postTransforms[i](element, options);
       }
     }
 
+    //! 删除尾随的空白文本节点
     function trimEndingWhitespace(el) {
       // remove trailing whitespace node
+      // 删除尾随的空白节点
+
+      // 如果不是pre标签
       if (!inPre) {
         var lastNode;
+        // 从最后一个子节点往前遍历，如果是文本节点并且为 ' '
         while (
           (lastNode = el.children[el.children.length - 1]) &&
           lastNode.type === 3 &&
           lastNode.text === ' '
         ) {
+          // 为文本节点并且 ' ', 把这个节点推出去
           el.children.pop();
         }
       }
     }
 
+    //! 检测root，如果为slot和template标签，警告，如果有v-for指令，警告
     function checkRootConstraints(el) {
+      // 如果是slot标签或者template标签
       if (el.tag === 'slot' || el.tag === 'template') {
+        // 警告
         warnOnce(
           "Cannot use <" + (el.tag) + "> as component root element because it may " +
           'contain multiple nodes.', {
@@ -11215,7 +11421,9 @@
           }
         );
       }
+      // 如果标签上有v-for指令 
       if (el.attrsMap.hasOwnProperty('v-for')) {
+        // 警告
         warnOnce(
           'Cannot use v-for on stateful component root element because ' +
           'it renders multiple elements.',
@@ -11224,6 +11432,15 @@
       }
     }
 
+    //! console.log(options)
+    //! 此时的options
+    //! comments: undefined
+    //! delimiters: undefined
+    //! outputSourceRange: true
+    //! shouldDecodeNewlines: false
+    //! shouldDecodeNewlinesForHref: false
+    //! warn: ƒ (msg, range, tip)
+    //TODO 200行的实参
     parseHTML(template, {
       warn: warn$2,
       expectHTML: options.expectHTML,
@@ -11233,24 +11450,36 @@
       shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
       shouldKeepComment: options.comments,
       outputSourceRange: options.outputSourceRange,
+      //!  标签开始函数
       start: function start(tag, attrs, unary, start$1, end) {
         // check namespace.
         // inherit parent ns if there is one
+        // 检查命名空间。继承父ns（如果有）
+        // platformGetTagNamespace判断 tag 是否是svg或者math 标签
         var ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag);
 
         // handle IE svg bug
+        // 处理IE svg错误
         /* istanbul ignore if */
+        // 如果是IE，并且ns为svg标签
         if (isIE && ns === 'svg') {
+          // 防止ie浏览器的svg的bug替换属性含有NS+数字，去掉NS+数字
           attrs = guardIESVGBug(attrs);
         }
 
+        // 转换属性，把数组属性转换成对象属性，返回对象 AST元素
+        // 根据currentParent创建一个AST
         var element = createASTElement(tag, attrs, currentParent);
+        // 判断tag是否是svg或math标签
         if (ns) {
           element.ns = ns;
         }
 
+        // 忽略
         {
+          // 如果为true
           if (options.outputSourceRange) {
+            // 添加方法
             element.start = start$1;
             element.end = end;
             element.rawAttrsMap = element.attrsList.reduce(function (cumulated, attr) {
@@ -11271,7 +11500,10 @@
           });
         }
 
+        // 如果是style或script标签或type=javascript/text
+        // 并且不再node环境下
         if (isForbiddenTag(element) && !isServerRendering()) {
+          // 警告
           element.forbidden = true;
            warn$2(
             'Templates should only be responsible for mapping the state to the ' +
@@ -11282,52 +11514,81 @@
           );
         }
 
+        console.log(preTransforms);
         // apply pre-transforms
+
+        //! 在此加工
+        //! 将element进行一次加工
+        //! preTransformNode把attrsMap与attrsList属性值转换添加到el   
+        //! ast虚拟dom中为虚拟dom添加for，alias，iterator1，iterator2， addRawAttr ，type ，key， ref，slotName或者slotScope或者slot，component或者inlineTemplate ， plain，if ，else，elseif 属性
         for (var i = 0; i < preTransforms.length; i++) {
           element = preTransforms[i](element, options) || element;
         }
-
+        // 如果标签内没有v-pre指令
         if (!inVPre) {
+          // 检查标签是否有v-pre 指令，如果有v-pre指令，就将el.pre置为true
           processPre(element);
+          // 如果有v-pre，此时的element.pre就为true
           if (element.pre) {
+            // 如果标签有v-pre 指令 则标记为true 
             inVPre = true;
           }
         }
+        // export const isPreTag = (tag: ?string): boolean => tag === 'pre'
+        // platformIsPreTag = options.isPreTag || no //方法 
+        // 判断标签是否是pre
         if (platformIsPreTag(element.tag)) {
+          // 如果是pre， inPre为true
           inPre = true;
         }
+        // 如果inVPre，也就是有v-pre指令
         if (inVPre) {
+          // 浅拷贝属性 把AST的attrsList拷贝到attrs中,如果没有pre块，标记plain为true
           processRawAttrs(element);
+          // 如果processed为true代表已经加工过 防止二次加工
+          // 如果element没被加工过
         } else if (!element.processed) {
           // structural directives
+          // 结构指令
+
+          // 执行for if once的加工
           processFor(element);
           processIf(element);
           processOnce(element);
         }
 
+        // 如果不是根
         if (!root) {
           root = element;
           {
+            // 检测root，如果为slot和template标签，警告，如果有v-for指令，警告
             checkRootConstraints(root);
           }
         }
 
+        // 如果unary为false
         if (!unary) {
+          //为parse函数 stack标签堆栈 添加一个标签
           currentParent = element;
           stack.push(element);
         } else {
+          // true则 克隆节点
           closeElement(element);
         }
       },
 
+      //! 删除当前节点的子节点中的最后一个如果是空格或者空的文本节点则删除，
+      //! 为stack出栈一个当前标签，为currentParent变量获取到当前节点的父节点
       end: function end(tag, start, end$1) {
         var element = stack[stack.length - 1];
         // pop stack
         stack.length -= 1;
+        // 取到栈中最后一位数据 如果标签是这样 <div><span><i></i></span></div> 则这里会先是i 先进后出
         currentParent = stack[stack.length - 1];
         if ( options.outputSourceRange) {
           element.end = end$1;
         }
+        // 
         closeElement(element);
       },
 
@@ -11424,34 +11685,61 @@
     return root
   }
 
+  //! 检查标签是否有v-pre 指令，如果有v-pre指令，就将el.pre置为true
   function processPre(el) {
+    // 如果获取到v-pre指令
     if (getAndRemoveAttr(el, 'v-pre') != null) {
+      // pre置为true
       el.pre = true;
     }
   }
 
+  //! 浅拷贝属性 把虚拟dom的attrsList拷贝到attrs中,如果没有pre块，标记plain为true
   function processRawAttrs(el) {
+    // 获取属性列表
     var list = el.attrsList;
+    // 获取属性列表长度
     var len = list.length;
+    // 如果属性列表不为空
     if (len) {
+      // 浅拷贝到el.attrs中
       var attrs = el.attrs = new Array(len);
+      // 遍历attrs数组
       for (var i = 0; i < len; i++) {
+        // 给每个i都加上属性名和属性值
         attrs[i] = {
           name: list[i].name,
           value: JSON.stringify(list[i].value)
         };
+        // 如果有start和end的，就同样赋值
         if (list[i].start != null) {
           attrs[i].start = list[i].start;
           attrs[i].end = list[i].end;
         }
       }
+      // 如果 pre不存在
     } else if (!el.pre) {
       // non root node in pre blocks with no attributes
+      // 没有属性的pre块中的非根节点
       el.plain = true;
     }
   }
   // branch0是AST
   // processElement(branch0, options)
+
+
+  //! 给AST添加key属性(动态绑定的key值)，添加plain属性
+  //! 如果有动态绑定的ref属性，给AST添加ref属性(动态绑定的ref的值)，
+  //! 并且遍历当前AST，根据是否有v-for指令，给AST添加refInFor属性(值取决于是否有v-for指令)
+  //! 处理作为slot传递给组件的内容，并添加添加slotScope slotTarget slotTargetDynamic scopedSlots属性
+  //! 处理<slot/>，并给AST添加slotName属性(slot标签的name值)
+  //! 如果存在:is 给AST添加component属性(值为:is的值)，
+  //! 如果有inline-template属性，也会给AST添加component属性(值为true)
+  //! 给AST添加staticStyle属性(静态style值)，styleBinding属性(动态绑定的style值)
+  //! 给AST添加staticClass属性(静态class值)，classBinding属性(动态绑定的class值)
+  //! 检查属性，为虚拟dom属性转换成对应需要的虚拟dom vonde数据 
+  //! 为AST 添加muted属性，events，nativeEvents，directives 
+
   function processElement(
     element,
     options
@@ -11503,6 +11791,7 @@
     return element
   }
 
+  //! 给AST添加key属性 也就是动态绑定的key值
   function processKey(el) {
     // 获取 v-bind:key或:key的属性值 并经过过滤器解析后返回的值，
     // 其实就是:key和v-bind:key后面的值
@@ -11541,7 +11830,10 @@
       el.key = exp;
     }
   }
-  //获取ref 属性，并且判断ref 是否含有v-for指令
+  //! 获取ref属性，并且判断ref 是否含有v-for指令
+  //! 如果有动态绑定的ref属性，给AST添加ref属性(动态绑定的ref的值)，
+  //! 并且遍历当前AST，根据是否有v-for指令，给AST添加refInFor属性(值取决于是否有v-for指令)
+
   function processRef(el) {
     // 通过getBindingAttr获取动态绑定的ref属性值，并且这个值是经过过滤器解析后的值
     var ref = getBindingAttr(el, 'ref');
@@ -11658,9 +11950,13 @@
     }
   }
 
+  //! 找到上一个兄弟节点，如果上一个兄弟节点是if，则下一个兄弟节点则是elseif 
   function processIfConditions(el, parent) {
+    // 寻找上一个兄弟节点
     var prev = findPrevElement(parent.children);
+    // 如果上一个兄弟节点存在，并且有v-if指令
     if (prev && prev.if) {
+      // 给其添加elseif标记
       addIfCondition(prev, {
         exp: el.elseif,
         block: el
@@ -11674,12 +11970,19 @@
     }
   }
 
+  //! 找到上一个兄弟节点
   function findPrevElement(children )  {
+    // 获取长度，传入的是parent.children，其实就是当前爸爸的所有儿子节点长度
+    // 也就是兄弟节点的长度
     var i = children.length;
+    // 遍历
     while (i--) {
+      // 如果是元素节点
       if (children[i].type === 1) {
+        // 直接返回
         return children[i]
       } else {
+        // 否则警告
         if ( children[i].text !== ' ') {
           warn$2(
             "text \"" + (children[i].text.trim()) + "\" between v-if and v-else(-if) " +
@@ -11687,12 +11990,13 @@
             children[i]
           );
         }
+        // 不是元素节点，就推出去
         children.pop();
       }
     }
   }
 
-  // 为if指令添加标记
+  //! 为AST添加ifConditions数组，并且给数组添加condition(条件)
   function addIfCondition(el, condition) {
     // 如果ifConditions不存在
     if (!el.ifConditions) {
@@ -11712,8 +12016,9 @@
 
   // handle content being passed to a component as slot,
   // e.g. <template slot="xxx">, <div slot-scope="xxx">
-  // 处理作为slot传递给组件的内容，
-  // e、 g.<template slot=“xxx”>，<div slot scope=“xxx”></div>
+  //! 处理作为slot传递给组件的内容
+  //! 添加slotScope slotTarget slotTargetDynamic scopedSlots
+  //! e、 g.<template slot=“xxx”>，<div slot scope=“xxx”></div>
   function processSlotContent(el) {
     var slotScope;
     // 如果AST是template
@@ -11852,7 +12157,7 @@
           var dynamic$1 = ref$1.dynamic;
           // 创建父级为el的template的AST
           var slotContainer = slots[name$1] = createASTElement('template', [], el);
-          赋值;
+          // 赋值
           slotContainer.slotTarget = name$1;
           slotContainer.slotTargetDynamic = dynamic$1;
 
@@ -11877,7 +12182,7 @@
     }
   }
 
-  // 获取slot的name和dynamic
+  //! 获取slot的name和dynamic
   function getSlotName(binding) {
     // 传入的属性的name  将其正则匹配替换成''
     var name = binding.name.replace(slotRE, '');
@@ -11916,8 +12221,8 @@
       }
   }
 
-  // handle <slot/> outlets
-  // 处理<slot/>
+  //! handle <slot/> outlets
+  //! 处理<slot/>
   function processSlotOutlet(el) {
     // 如果标签是slot
     if (el.tag === 'slot') {
@@ -11934,8 +12239,8 @@
       }
     }
   }
-  // 处理:is 动态组件的 如果存在:is 给el添加component属性为:is的值，
-  // 如果有inline-template属性，也会添加inlineTemplate属性为true
+  //! 处理:is 动态组件的 如果存在:is 给el添加component属性为:is的值，
+  //! 如果有inline-template属性，也会添加inlineTemplate属性为true
   function processComponent(el) {
     var binding;
     // 获取动态绑定的is属性的值并判断，如果存在
@@ -11949,8 +12254,8 @@
       el.inlineTemplate = true;
     }
   }
-  // 检查属性，为虚拟dom属性转换成对应需要的虚拟dom vonde数据 
-  // 为AST 添加muted， events，nativeEvents，directives
+  //! 检查属性，为虚拟dom属性转换成对应需要的虚拟dom vonde数据 
+  //! 为AST 添加muted， events，nativeEvents，directives
   function processAttrs(el) {
     // 获取属性列表
     var list = el.attrsList;
@@ -12159,7 +12464,7 @@
     }
   }
 
-  // 遍历当前AST， 如果v-for，返回true，没有v-for 返回false
+  //! 遍历当前AST， 如果v-for，返回true，没有v-for 返回false
   function checkInFor(el) {
     // 获取当前AST
     var parent = el;
@@ -12177,7 +12482,7 @@
     return false
   }
 
-  // 解析修饰符并返回一个ret对象，属性名为修饰符名，值为true
+  //! 解析修饰符并返回一个ret对象，属性名为修饰符名，值为true
   function parseModifiers(name) {
     // 传入的show click input.enter之类的方法名
     var match = name.match(modifierRE);
@@ -12197,14 +12502,13 @@
     }
   }
 
-  // 把数组对象转换成对象
-  // attrs = [{name: "v-model", value: "inputVal", start: 51, end: 69}]
-  // attrs = [
-  //   {name: "v-model", value: "inputVal", start: 51, end: 69}
-  //   {name: "class", value: "next", start: 70, end: 82}
-  // ]
-  // 转换成 map = {v-model: "inputVal", class: "next"}
-
+  //! 把数组对象转换成对象
+  //! attrs = [{name: "v-model", value: "inputVal", start: 51, end: 69}]
+  //! attrs = [
+  //!   {name: "v-model", value: "inputVal", start: 51, end: 69}
+  //!   {name: "class", value: "next", start: 70, end: 82}
+  //! ]
+  //! 转换成 map = {v-model: "inputVal", class: "next"}
   function makeAttrsMap(attrs ) {
     // 创建map对象
     var map = {};
@@ -12228,6 +12532,8 @@
     return el.tag === 'script' || el.tag === 'style'
   }
 
+  //! 如果是style或者是是script 标签并且type属性不存在 
+  //! 或者存在并且是javascript 属性 的时候返回真
   function isForbiddenTag(el) {
     return (
       el.tag === 'style' ||
@@ -12238,19 +12544,29 @@
     )
   }
 
+  // 匹配字符串 xmlns:NS+数字 
   var ieNSBug = /^xmlns:NS\d+/;
+  // 匹配字符串 NS+数字
   var ieNSPrefix = /^NS\d+:/;
 
   /* istanbul ignore next */
+  // 防止ie浏览器的svg的bug替换属性含有NS+数字，去掉NS+数字
   function guardIESVGBug(attrs) {
+    // 创建空数组
     var res = [];
+    // 遍历属性数组
     for (var i = 0; i < attrs.length; i++) {
+      // 取得每个属性
       var attr = attrs[i];
+      // 匹配字符串 xmlns:NS+数字 
       if (!ieNSBug.test(attr.name)) {
+        // 将NS+数字变成' '
         attr.name = attr.name.replace(ieNSPrefix, '');
+        // 然后把attr加入到res
         res.push(attr);
       }
     }
+    // 返回res
     return res
   }
 
@@ -12452,6 +12768,8 @@
     // isPreTag 判断是否是pre
     // export const isPreTag = (tag: ?string): boolean => tag === 'pre'
     isUnaryTag: isUnaryTag,
+    // isUnaryTag 判断是否是'area,base,br,col,embed,frame,hr,img,input,isindex,keygen,' +
+    // 'link,meta,param,source,track,wbr'
     mustUseProp: mustUseProp,
     // mustUseProp:
     // attributes that should be using props for binding
@@ -12467,6 +12785,8 @@
     // }
 
     canBeLeftOpenTag: canBeLeftOpenTag,
+    // canBeLeftOpenTag 匹配
+    // 'colgroup,dd,dt,li,options,p,td,tfoot,th,thead,tr,source'
     isReservedTag: isReservedTag,
     // isReservedTag:
     // 是否是HTML标签或是SVG标签
