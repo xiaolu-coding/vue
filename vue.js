@@ -10560,6 +10560,7 @@
 
   // HTML5 tags https://html.spec.whatwg.org/multipage/indices.html#elements-3
   // Phrasing Content https://html.spec.whatwg.org/multipage/dom.html#phrasing-content
+  // 返回一堆函数，通过函数判断是否是这个标签，
   var isNonPhrasingTag = makeMap(
     'address,article,aside,base,blockquote,body,caption,col,colgroup,dd,' +
     'details,dialog,div,dl,dt,fieldset,figcaption,figure,footer,form,' +
@@ -10607,7 +10608,7 @@
 
   //! 替换的map 将这些转换成对应的
   var decodingMap = {
-    '&lt;': '<',
+    '&lt;': '<',  
     '&gt;': '>',
     '&quot;': '"',
     '&amp;': '&',
@@ -10753,10 +10754,17 @@
           }
 
           // Start tag:
+          // 获取开始标签的名称，收集属性集合，开始位置和结束位置，并且返回该对象
           var startTagMatch = parseStartTag();
+          // 此时获取到了开始标签和属性集合
           if (startTagMatch) {
+            //把数组对象属性值循环变成对象，这样可以过滤相同的属性
+            //为parseHTML 节点标签堆栈 插入一个桟数据
+            //调用options.start  为parse函数 stack标签堆栈 添加一个标签
             handleStartTag(startTagMatch);
+            // 匹配tag标签是pre,textarea，并且第二个参数的第一个字符是回车键
             if (shouldIgnoreFirstNewline(startTagMatch.tagName, html)) {
+              // 去除回车键空格
               advance(1);
             }
             continue
@@ -10765,24 +10773,26 @@
 
         var text = (void 0), rest = (void 0), next = (void 0);
         if (textEnd >= 0) {
+          // 截取字符串  var textEnd = html.indexOf('<'); //匹配开始标签或者结束标签的位置
           rest = html.slice(textEnd);
           while (
-            !endTag.test(rest) &&
-            !startTagOpen.test(rest) &&
-            !comment.test(rest) &&
-            !conditionalComment.test(rest)
+            !endTag.test(rest) && // 匹配开头必需是</ 后面可以忽略是任何字符串
+            !startTagOpen.test(rest) && // 匹配开头必需是< 后面可以忽略是任何字符串
+            !comment.test(rest) && // 匹配 开始字符串为<!--任何字符串
+            !conditionalComment.test(rest) //匹配开始为 <![ 字符串
           ) {
             // < in plain text, be forgiving and treat it as text
-            next = rest.indexOf('<', 1);
+            // <在纯文本中，要宽容，把它当作文本来对待
+            next = rest.indexOf('<', 1); // 匹配是否有多个<
             if (next < 0) { break }
-            textEnd += next;
-            rest = html.slice(textEnd);
+            textEnd += next; // 截取 索引位置
+            rest = html.slice(textEnd);    //获取 < 字符串 <    获取他们两符号< 之间的字符串
           }
-          text = html.substring(0, textEnd);
+          text = html.substring(0, textEnd); //截取字符串 前面字符串到 <
         }
 
-        if (textEnd < 0) {
-          text = html;
+        if (textEnd < 0) { // 都没有匹配到 < 符号 则表示纯文本
+          text = html; // 出来text
         }
 
         if (text) {
@@ -10793,6 +10803,7 @@
           options.chars(text, index - text.length, index);
         }
       } else {
+        // 处理是script,style,textarea
         var endTagLength = 0;
         var stackedTag = lastTag.toLowerCase();
         var reStackedTag = reCache[stackedTag] || (reCache[stackedTag] = new RegExp('([\\s\\S]*?)(</' + stackedTag + '[^>]*>)', 'i'));
@@ -10803,6 +10814,7 @@
               .replace(/<!\--([\s\S]*?)-->/g, '$1') // #7298
               .replace(/<!\[CDATA\[([\s\S]*?)]]>/g, '$1');
           }
+          //匹配tag标签是pre,textarea，并且第二个参数的第一个字符是回车键
           if (shouldIgnoreFirstNewline(stackedTag, text)) {
             text = text.slice(1);
           }
@@ -10834,57 +10846,137 @@
       html = html.substring(n);
     }
 
+    //! 获取开始标签的名称，收集属性集合，开始位置和结束位置，并且返回该对象
     function parseStartTag () {
+      // 匹配开头必需是< 后面可以忽略是任何字符串  匹配开始标签
       var start = html.match(startTagOpen);
+      // 如果匹配到了开始标签
+      // console.log(start)
+      // 0: "<div"
+      // 1: "div"
+      // groups: undefined
+      // index: 0
+      // input: "<div id="app">↵    <!-- 你好啊 -->↵    <div :v-show="isShow">111</div>↵    <input type="text" v-model="inputVal" @input.enter="inputIII">↵    <div :class="{red: isRed}">111111111</div>↵    <button @click="btnClick">提交</button>↵  </div>"
+      // length: 2
       if (start) {
         var match = {
-          tagName: start[1],
-          attrs: [],
-          start: index
+          tagName: start[1], // start[1]是标签名
+          attrs: [],  // 标签属性
+          start: index // 标签的开始索引
         };
-        advance(start[0].length);
+        // 标记开始标签的位置，截取了开始标签，把开始标签截掉了
+        advance(start[0].length);  
+        // console.log(html)
         var end, attr;
+        // 如果没有匹配到 关闭标签   dynamicArgAttribute获取动态绑定的属性  attribute 获取静态属性
         while (!(end = html.match(startTagClose)) && (attr = html.match(dynamicArgAttribute) || html.match(attribute))) {
           attr.start = index;
+          // console.log(attr)
+          // 0: " id="app""
+          // 1: "id"
+          // 2: "="
+          // 3: "app"
+          // 4: undefined
+          // 5: undefined
+          // end: 13
+          // groups: undefined
+          // index: 0
+          // input: " id="app">↵    <!-- 你好啊 -->↵    <div :v-show="isShow">111</div>↵    <input type="text" v-model="inputVal" @input.enter="inputIII">↵    <div :class="{red: isRed}">111111111</div>↵    <button @click="btnClick">提交</button>↵  </div>"
+          // start: 4
+          // length: 6
+
+          //! 遍历截取所有的属性标签
           advance(attr[0].length);
+          // console.log(html)
           attr.end = index;
+          //! 把所有属性收集到一个集合
           match.attrs.push(attr);
         }
+        // 如果是/>标签 
         if (end) {
+          // 则unarySlash 是/
+          // 如果是>标签 则unarySlash 是空
+          // console.log(end)
+          // 0: ">"
+          // 1: ""
+          // groups: undefined
+          // index: 0
+          // input: ">↵    <!-- 你好啊 -->↵    <div :v-show="isShow">111</div>↵    <input type="text" v-model="inputVal" @input.enter="inputIII">↵    <div :class="{red: isRed}">111111111</div>↵    <button @click="btnClick">提交</button>↵  </div>"
+          // length: 2
           match.unarySlash = end[1];
+          //截取掉开始标签，并且更新索引
           advance(end[0].length);
+          // console.log(html)
+          // 开始标签的结束位置
           match.end = index;
           return match
         }
       }
     }
-
+    //! 把数组对象属性值循环变成对象，这样可以过滤相同的属性
+    //! 为parseHTML 节点标签堆栈 插入一个桟数据
+    //! 调用options.start  为parse函数 stack标签堆栈 添加一个标签
     function handleStartTag (match) {
+      // console.log(match)
+      // attrs: Array(1)
+      // 0: (6) [" id="app"", "id", "=", "app", undefined, undefined, index: 0, input: " id="app">↵    <!-- 你好啊 -->↵    <div :v-show="isSh…   <button @click="btnClick">提交</button>↵  </div>", groups: undefined, start: 4, end: 13]
+      // length: 1
+      // __proto__: Array(0)
+      // end: 14
+      // start: 0
+      // tagName: "div"
+      // unarySlash: ""
+      // __proto__: Object
+
+      // 开始标签名称
       var tagName = match.tagName;
+      // 如果是/>标签 则unarySlash 是/。 如果是>标签 则unarySlash 是空
       var unarySlash = match.unarySlash;
 
       if (expectHTML) {
+        // 如果上一个标签是p
+
+        // isNonPhrasingTag返回一堆函数，通过函数判断是否是这个标签
+        // 'address,article,aside,base,blockquote,body,caption,col,colgroup,dd,' +
+        // 'details,dialog,div,dl,dt,fieldset,figcaption,figure,footer,form,' +
+        // 'h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,legend,li,menuitem,meta,' +
+        // 'optgroup,option,param,rp,rt,source,style,summary,tbody,td,tfoot,th,thead,' +
+        // 'title,tr,track'
         if (lastTag === 'p' && isNonPhrasingTag(tagName)) {
+          //查找parseHTML的stack栈中与当前tagName标签名称相等的标签，
+          //调用options.end函数，删除当前节点的子节点中的最后一个如果是空格或者空的文本节点则删除，
+          //为stack出栈一个当前标签，为currentParent变量获取到当前节点的父节点
           parseEndTag(lastTag);
         }
+        //! canBeLeftOpenTag 匹配
+        //! 'colgroup,dd,dt,li,options,p,td,tfoot,th,thead,tr,source' 
+
+        //上一个标签和现在标签相同  <li><li> 编译成 <li></li>  
+        // 但是这种情况是不会出现的 因为浏览器解析的时候会自动补全如果是<li>我是li标签<li> 
+        // 浏览器自动解析成  <li>我是li标签</li><li> </li>
         if (canBeLeftOpenTag(tagName) && lastTag === tagName) {
           parseEndTag(tagName);
         }
       }
-
+      //! 匹配这些标签，不是就是no
+      //! 'area,base,br,col,embed,frame,hr,img,input,isindex,keygen,' +
+      //! 'link,meta,param,source,track,wbr'
       var unary = isUnaryTag(tagName) || !!unarySlash;
 
+      // 获取属性的长度
       var l = match.attrs.length;
       var attrs = new Array(l);
+      //数组属性对象转换正真正的数组对象
       for (var i = 0; i < l; i++) {
+        //获取属性对象
         var args = match.attrs[i];
         var value = args[3] || args[4] || args[5] || '';
         var shouldDecodeNewlines = tagName === 'a' && args[1] === 'href'
-          ? options.shouldDecodeNewlinesForHref
-          : options.shouldDecodeNewlines;
-        attrs[i] = {
-          name: args[1],
-          value: decodeAttr(value, shouldDecodeNewlines)
+          ? options.shouldDecodeNewlinesForHref // true chrome在a[href]中编码内容
+          : options.shouldDecodeNewlines; //flase //IE在属性值中编码换行，而其他浏览器则不会
+        attrs[i] = { //把数组对象属性值循环变成对象，这样可以过滤相同的属性
+          name: args[1], //属性名称
+          value: decodeAttr(value, shouldDecodeNewlines) //替换html 中的特殊符号，转义成js解析的字符串,替换 把   &lt;替换 <  ， &gt; 替换 > ， &quot;替换  "， &amp;替换 & ， &#10;替换\n  ，&#9;替换\t
         };
         if ( options.outputSourceRange) {
           attrs[i].start = args.start + args[0].match(/^\s*/).length;
@@ -10892,17 +10984,32 @@
         }
       }
 
-      if (!unary) {
-        stack.push({ tag: tagName, lowerCasedTag: tagName.toLowerCase(), attrs: attrs, start: match.start, end: match.end });
+      if (!unary) { //如果不是单标签
+        // 为parseHTML 节点标签堆栈 插入一个桟数据
+        stack.push({ //标签堆栈
+          tag: tagName, //开始标签名称
+          lowerCasedTag: tagName.toLowerCase(), //变成小写记录标签
+          attrs: attrs, // 获取属性
+          start: match.start, 
+          end: match.end 
+        });
         lastTag = tagName;
       }
 
       if (options.start) {
+        //标签开始函数， 创建一个ast标签dom，  判断获取v-for属性是否存在如果有则转义 v-for指令 把for，alias，iterator1，iterator2属性添加到虚拟dom中
+        //获取v-if属性，为el虚拟dom添加 v-if，v-eles，v-else-if 属性
+        //获取v-once 指令属性，如果有有该属性 为虚拟dom标签 标记事件 只触发一次则销毁
+        //校验属性的值，为el添加muted， events，nativeEvents，directives，  key， ref，slotName或者slotScope或者slot，component或者inlineTemplate 标志 属性
+        // 标志当前的currentParent当前的 element
+        //为parse函数 stack标签堆栈 添加一个标签
         options.start(tagName, attrs, unary, match.start, match.end);
       }
     }
 
-    // 
+    //! 把数组对象属性值循环变成对象，这样可以过滤相同的属性
+    //! 为parseHTML 节点标签堆栈 插入一个桟数据
+    //! 调用options.start  为parse函数 stack标签堆栈 添加一个标签 
     function parseEndTag (
       tagName, // 标签名称
       start,  // 结束标签开始的位置
@@ -11514,7 +11621,7 @@
           );
         }
 
-        console.log(preTransforms);
+        // console.log(preTransforms)
         // apply pre-transforms
 
         //! 在此加工
@@ -11593,8 +11700,10 @@
       },
 
       chars: function chars(text, start, end) {
+        // 判断是否有当前父节点
         if (!currentParent) {
           {
+            // 如果是模板字符串。警告
             if (text === template) {
               warnOnce(
                 'Component template requires a root element, rather than just text.', {
@@ -11613,43 +11722,54 @@
         }
         // IE textarea placeholder bug
         /* istanbul ignore if */
-        if (isIE &&
-          currentParent.tag === 'textarea' &&
-          currentParent.attrsMap.placeholder === text
+        if (isIE && // 如果是IE
+          currentParent.tag === 'textarea' && // 如果父亲节点是textarea
+          currentParent.attrsMap.placeholder === text // 如果他的html5 用户信息提示和当前的文本一样
         ) {
           return
         }
-        var children = currentParent.children;
+        var children = currentParent.children; // 获取同级的兄弟节点
+
+        // 如果是pre，则不需要trim
         if (inPre || text.trim()) {
+          // isTextTag判断父节点是否是script或style标签，是的话返回true
+          // decodeHTMLCached获取 真是dom的textContent文本
           text = isTextTag(currentParent) ? text : decodeHTMLCached(text);
+        
         } else if (!children.length) {
           // remove the whitespace-only node right after an opening tag
+          // 删除开始标记后的空白节点
           text = '';
         } else if (whitespaceOption) {
           if (whitespaceOption === 'condense') {
             // in condense mode, remove the whitespace node if it contains
             // line break, otherwise condense to a single space
+            // 在压缩模式下，如果空白节点包含换行符，否则压缩为一个空格
             text = lineBreakRE.test(text) ? '' : ' ';
           } else {
             text = ' ';
           }
         } else {
+          // 通过 { preserveWhitespace: false } 放弃模板标签之间的空格。
           text = preserveWhitespace ? ' ' : '';
         }
         if (text) {
           if (!inPre && whitespaceOption === 'condense') {
             // condense consecutive whitespaces into single space
+            // 将连续空格压缩为单个空格
             text = text.replace(whitespaceRE$1, ' ');
           }
           var res;
           var child;
+          // 如果不是v-pre 并且text不是一个空格  // 匹配view 指令，并且把他转换成 虚拟dom vonde 需要渲染的函数,
           if (!inVPre && text !== ' ' && (res = parseText(text, delimiters))) {
-            child = {
-              type: 2,
+            child = { 
+              type: 2, // 属性节点
               expression: res.expression,
               tokens: res.tokens,
               text: text
             };
+            // 如果当前text不是空的，子节点也不是空的表示是注释几点
           } else if (text !== ' ' || !children.length || children[children.length - 1].text !== ' ') {
             child = {
               type: 3,
@@ -11665,19 +11785,22 @@
           }
         }
       },
+      //把text添加到属性节点或者添加到注释节点，ast模板数据
       comment: function comment(text, start, end) {
         // adding anyting as a sibling to the root node is forbidden
         // comments should still be allowed, but ignored
+        // 禁止将anyting作为同级添加到根节点评论仍然应该被允许，但是被忽略
         if (currentParent) {
           var child = {
-            type: 3,
+            type: 3, // 文本节点
             text: text,
-            isComment: true
+            isComment: true // isComment为true
           };
           if ( options.outputSourceRange) {
             child.start = start;
             child.end = end;
           }
+          // 添加进去
           currentParent.children.push(child);
         }
       }
@@ -12528,6 +12651,7 @@
   }
 
   // for script (e.g. type="x/template") or style, do not decode content
+  //! 判断是否是script或style标签，是的话返回true
   function isTextTag(el) {
     return el.tag === 'script' || el.tag === 'style'
   }
